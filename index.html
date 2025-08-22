@@ -1,24 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>PDF Color Inverter</title>
+  <title>PDF Colour Inverter</title>
 </head>
 <body>
-  <h2>Invert PDF Colors</h2>
-
+  <h2>Invert PDF Colours</h2>
   <input type="file" id="fileInput" accept="application/pdf" multiple />
-  <br><br>
   <button id="processBtn">Process PDFs</button>
   <button id="downloadBtn" disabled>Download All</button>
 
-  <p id="status"></p>
-
   <canvas id="canvas" style="display:none;"></canvas>
 
-  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
-  <!-- PDF-Lib -->
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script src="app.js"></script>
 </body>
