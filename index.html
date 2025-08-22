@@ -5,8 +5,10 @@
 </head>
 <body>
   <h2>Invert PDF Colors</h2>
-  <input type="file" id="fileInput" accept="application/pdf" />
-  <button id="processBtn">Invert & Download</button>
+  <input type="file" id="fileInput" accept="application/pdf" multiple />
+  <button id="processBtn">Process PDFs</button>
+  <button id="downloadBtn" disabled>Download All</button>
+
   <canvas id="canvas" style="display:none;"></canvas>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -14,4 +16,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-

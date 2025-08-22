@@ -1,68 +1,82 @@
 const fileInput = document.getElementById("fileInput");
 const processBtn = document.getElementById("processBtn");
+const downloadBtn = document.getElementById("downloadBtn");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+let processedFiles = []; // Store {name, blob}
+
 processBtn.addEventListener("click", async () => {
   if (!fileInput.files.length) {
-    alert("Please upload a PDF first!");
+    alert("Please upload at least one PDF!");
     return;
   }
 
-  const file = fileInput.files[0];
-  const fileData = new Uint8Array(await file.arrayBuffer());
+  processedFiles = []; // reset previous
 
-  // Load PDF
-  const pdf = await pdfjsLib.getDocument({ data: fileData }).promise;
+  for (let file of fileInput.files) {
+    const fileData = new Uint8Array(await file.arrayBuffer());
+    const pdf = await pdfjsLib.getDocument({ data: fileData }).promise;
 
-  // Create new PDF with pdf-lib
-  const newPdf = await PDFLib.PDFDocument.create();
+    const newPdf = await PDFLib.PDFDocument.create();
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 2.0 });
 
-    const viewport = page.getViewport({ scale: 2.0 });
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
 
-    // Render to canvas
-    await page.render({ canvasContext: ctx, viewport }).promise;
+      await page.render({ canvasContext: ctx, viewport }).promise;
 
-    // Invert pixels
-    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let data = imageData.data;
-    for (let j = 0; j < data.length; j += 4) {
-      data[j] = 255 - data[j];     // R
-      data[j + 1] = 255 - data[j + 1]; // G
-      data[j + 2] = 255 - data[j + 2]; // B
+      let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let data = imageData.data;
+      for (let j = 0; j < data.length; j += 4) {
+        data[j] = 255 - data[j];       // R
+        data[j + 1] = 255 - data[j+1]; // G
+        data[j + 2] = 255 - data[j+2]; // B
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      const pngUrl = canvas.toDataURL("image/png");
+      const pngImage = await newPdf.embedPng(pngUrl);
+
+      const pageRef = newPdf.addPage([viewport.width, viewport.height]);
+      pageRef.drawImage(pngImage, {
+        x: 0,
+        y: 0,
+        width: viewport.width,
+        height: viewport.height
+      });
     }
-    ctx.putImageData(imageData, 0, 0);
 
-    // Export canvas to PNG
-    const pngUrl = canvas.toDataURL("image/png");
-    const pngImage = await newPdf.embedPng(pngUrl);
+    const pdfBytes = await newPdf.save();
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
 
-    // Add as new page
-    const pageRef = newPdf.addPage([viewport.width, viewport.height]);
-    pageRef.drawImage(pngImage, {
-      x: 0,
-      y: 0,
-      width: viewport.width,
-      height: viewport.height
+    processedFiles.push({
+      name: file.name.replace(".pdf", "_inverted.pdf"),
+      blob: blob
     });
   }
 
-  // Save new PDF
-  const pdfBytes = await newPdf.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
-  const url = URL.createObjectURL(blob);
+  // Enable download button
+  downloadBtn.disabled = false;
+  alert("Processing complete! Click 'Download All' to download your files.");
+});
 
-  // Trigger download
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "inverted.pdf";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+downloadBtn.addEventListener("click", () => {
+  processedFiles.forEach((fileObj, idx) => {
+    const url = URL.createObjectURL(fileObj.blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileObj.name;
+    document.body.appendChild(a);
+
+    // Stagger downloads slightly to avoid browser blocking
+    setTimeout(() => {
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, idx * 500);
+  });
 });
