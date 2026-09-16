@@ -1,18 +1,159 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Invert PDF colours in your browser while preserving selectable text and vector graphics."
+  />
   <title>PDF Colour Inverter</title>
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h2>Invert PDF Colours</h2>
-  <input type="file" id="fileInput" accept="application/pdf" multiple />
-  <button id="processBtn">Process PDFs</button>
-  <button id="downloadBtn" disabled>Download All</button>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
 
-  <canvas id="canvas" style="display:none;"></canvas>
+  <main class="app-shell">
+    <header class="hero">
+      <a class="brand" href="#" aria-label="PDF Colour Inverter home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="img">
+            <path d="M6.75 3.75h7.5l3 3v13.5H6.75z" />
+            <path d="M14.25 3.75v3h3" />
+            <path d="M9.25 11.25h5.5M9.25 14.25h5.5M9.25 17.25h3.5" />
+          </svg>
+        </span>
+        <span>PDF Colour Inverter</span>
+      </a>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+      <div class="hero-copy">
+        <p class="eyebrow">Comfortable reading, one click away</p>
+        <h1>Give bright PDFs a<br /><span>dark-mode makeover.</span></h1>
+        <p class="intro">
+          Invert colours without flattening your document. Text remains
+          selectable, links keep working, and vector graphics stay crisp.
+        </p>
+      </div>
+    </header>
+
+    <section class="converter-card" aria-labelledby="converter-title">
+      <div class="card-heading">
+        <div>
+          <p class="step-label">Step 1</p>
+          <h2 id="converter-title">Choose your PDFs</h2>
+        </div>
+        <span class="privacy-pill">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 10V7a4 4 0 0 1 8 0v3M6.5 10h11v9.5h-11z" />
+          </svg>
+          Private &amp; local
+        </span>
+      </div>
+
+      <label class="drop-zone" id="dropZone" for="fileInput">
+        <input
+          type="file"
+          id="fileInput"
+          accept="application/pdf,.pdf"
+          multiple
+        />
+        <span class="upload-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 16V5M8 9l4-4 4 4M5 14v5h14v-5" />
+          </svg>
+        </span>
+        <strong>Drop PDFs here or <span>browse files</span></strong>
+        <small>Multiple files supported · processed entirely in your browser</small>
+      </label>
+
+      <div class="selection-summary" id="selectionSummary" hidden>
+        <div>
+          <span class="summary-icon" aria-hidden="true">PDF</span>
+          <div>
+            <strong id="selectionTitle"></strong>
+            <small id="selectionDetails"></small>
+          </div>
+        </div>
+        <button class="text-button" id="clearBtn" type="button">Clear</button>
+      </div>
+
+      <div class="action-row">
+        <button class="primary-button" id="processBtn" type="button" disabled>
+          <span class="button-label">Invert colours</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14M14 7l5 5-5 5" />
+          </svg>
+        </button>
+        <p class="format-note">PDF files only · no uploads</p>
+      </div>
+
+      <div class="progress-panel" id="progressPanel" hidden aria-live="polite">
+        <div class="progress-copy">
+          <strong id="statusText">Preparing your PDFs…</strong>
+          <span id="progressText">0%</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+      </div>
+
+      <section class="results" id="results" hidden aria-labelledby="results-title">
+        <div class="results-heading">
+          <div>
+            <p class="step-label success">Complete</p>
+            <h2 id="results-title">Ready to download</h2>
+          </div>
+          <button class="secondary-button" id="downloadBtn" type="button">
+            Download all
+          </button>
+        </div>
+        <div class="result-list" id="resultList"></div>
+      </section>
+
+      <div class="error-message" id="errorMessage" hidden role="alert"></div>
+    </section>
+
+    <section class="feature-grid" aria-label="Benefits">
+      <article>
+        <span class="feature-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M7 4h10v16H7zM10 8h4M10 12h4M10 16h2" /></svg>
+        </span>
+        <div>
+          <h3>Vectors preserved</h3>
+          <p>No rasterisation. Text and line art stay sharp at every zoom level.</p>
+        </div>
+      </article>
+      <article>
+        <span class="feature-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-2.8 8-7 10-4.2-2-7-5.5-7-10V6zM9 12l2 2 4-4" /></svg>
+        </span>
+        <div>
+          <h3>Your files stay yours</h3>
+          <p>Everything runs locally in your browser. Nothing is uploaded.</p>
+        </div>
+      </article>
+      <article>
+        <span class="feature-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14.5-4.7M20 12a8 8 0 0 1-14.5 4.7M18.5 3.5v4h-4M5.5 20.5v-4h4" /></svg>
+        </span>
+        <div>
+          <h3>True colour inversion</h3>
+          <p>A PDF-native blend mode reverses every page colour accurately.</p>
+        </div>
+      </article>
+    </section>
+
+    <footer>
+      <p>Made for late-night readers, sensitive eyes, and dark-mode devotees.</p>
+      <p class="fine-print">
+        Password-protected PDFs and signed documents may not be supported.
+      </p>
+    </footer>
+  </main>
+
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
