@@ -83,6 +83,37 @@ const selectFiles = (files) => {
   }
 };
 
+const prependWhiteBackground = (pdf, page, { x, y, width, height }) => {
+  const {
+    fill,
+    popGraphicsState,
+    pushGraphicsState,
+    rectangle,
+    rgb,
+    setFillingColor,
+  } = PDFLib;
+
+  // A PDF page's white background is often implicit rather than painted.
+  // Add a real white layer before the original streams so Difference blend
+  // mode can invert the empty parts of the page as well as its content.
+  page.node.normalize();
+  const backgroundStream = page.createContentStream(
+    pushGraphicsState(),
+    setFillingColor(rgb(1, 1, 1)),
+    rectangle(x, y, width, height),
+    fill(),
+    popGraphicsState(),
+  );
+  const backgroundRef = pdf.context.register(backgroundStream);
+  const contents = page.node.Contents();
+
+  if (contents) {
+    contents.insert(0, backgroundRef);
+  } else {
+    page.node.addContentStream(backgroundRef);
+  }
+};
+
 const invertPdf = async (file, onPageComplete) => {
   const { PDFDocument, BlendMode, rgb } = PDFLib;
   const sourceBytes = await file.arrayBuffer();
@@ -91,7 +122,10 @@ const invertPdf = async (file, onPageComplete) => {
 
   for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
     const page = pages[pageIndex];
-    const { x, y, width, height } = page.getCropBox();
+    const bounds = page.getCropBox();
+    const { x, y, width, height } = bounds;
+
+    prependWhiteBackground(pdf, page, bounds);
 
     page.drawRectangle({
       x,
